@@ -12,7 +12,7 @@ import { ServiceProvider } from "@prisma/client";
 interface ServiceProviderSearchResultProps {
   data: ServiceProvider[];
 }
-export default function PeopleSearchResult({
+export default function ServiceProvidersTable({
   data,
 }: ServiceProviderSearchResultProps) {
   return (

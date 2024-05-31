@@ -5,30 +5,32 @@ import PeopleSearchForm from "./service-provider-search-form";
 
 import { SearchServiceProviders } from "@/actions/service-provider-actions";
 import { useDebounce } from "@/app/hooks/use-debounce";
-import { appliedServiceProvidersSearchAtom } from "@/atoms/service-provider-atom";
+import {
+  appliedServiceProvidersSearchAtom,
+  searchInProgressAtom,
+} from "@/atoms/service-provider-atom";
 import { ServiceProvider } from "@prisma/client";
-import { useAtom } from "jotai";
-import PeopleSearchResult from "./service-provider-search-result";
+import { useAtom, useSetAtom } from "jotai";
+import ServiceProvidersTable from "./service-provider-table";
 
 export const ServiceProviders = () => {
   const [currentSearch] = useAtom(appliedServiceProvidersSearchAtom);
-  const debounceSearch = useDebounce(currentSearch, 300);
-  const [loading, setLoading] = useState(false);
+  const setIsSearching = useSetAtom(searchInProgressAtom);
   useEffect(() => {
     const loadServiceProviders = async () => {
-      setLoading(true);
+      setIsSearching(true);
       try {
-        const data = await SearchServiceProviders(debounceSearch);
+        const data = await SearchServiceProviders(currentSearch);
 
         setData(data?.data || []);
       } catch (err) {
         alert(err);
       } finally {
-        setLoading(false);
+        setIsSearching(false);
       }
     };
     loadServiceProviders();
-  }, [debounceSearch]);
+  }, [currentSearch, setIsSearching]);
 
   const [data, setData] = useState<ServiceProvider[]>([]);
 
@@ -36,10 +38,9 @@ export const ServiceProviders = () => {
     <div className="flex min-h-screen p-2">
       <div className="w-1/3   p-1">
         <PeopleSearchForm />
-        {loading && <div className=" mt-2 italic p-1">Loading...</div>}
       </div>
       <div className="w-2/3  p-1">
-        <PeopleSearchResult data={data} />
+        <ServiceProvidersTable data={data} />
       </div>
     </div>
   );

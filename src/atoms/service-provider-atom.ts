@@ -23,3 +23,5 @@ export const serviceProviderSearchAtom =
 export const appliedServiceProvidersSearchAtom = atom((get) =>
   get(serviceProviderSearchAtom)
 );
+
+export const searchInProgressAtom = atom(false);

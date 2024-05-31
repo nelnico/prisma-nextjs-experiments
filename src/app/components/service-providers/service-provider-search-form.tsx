@@ -1,4 +1,5 @@
 "use client";
+import { useDebounce } from "@/app/hooks/use-debounce";
 import { serviceProviderSearchAtom } from "@/atoms/service-provider-atom";
 import {
   dbGenders,
@@ -13,22 +14,12 @@ import { de } from "@faker-js/faker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@nextui-org/input";
 import { Button, Select, SelectItem, Slider } from "@nextui-org/react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 export default function PeopleSearchForm() {
-  const [searchParams, setSearchParams] = useAtom(serviceProviderSearchAtom);
-
-  // const defaultValues: ServiceProviderSearchFormData = {
-  //   page: 0,
-  //   size: 20,
-  //   query: searchParams.query,
-  //   genderId: searchParams.genderId,
-  //   provinceIds: searchParams.provinceIds,
-  //   ageRange:
-  //     searchParams.ageRange?.length == 2 ? searchParams.ageRange : [21, 80],
-  // };
+  const setSearchParams = useSetAtom(serviceProviderSearchAtom);
 
   const defaultValues: ServiceProviderSearchFormData = {
     page: 0,
@@ -41,26 +32,23 @@ export default function PeopleSearchForm() {
 
   const form = useForm<ServiceProviderSearchFormData>({
     resolver: zodResolver(serviceProviderSearchSchema),
-    // defaultValues: searchParams ? searchParams : defaultValues,
-    defaultValues: defaultValues,
+    defaultValues,
   });
 
-  const { register, reset } = form;
+  const { register } = form;
 
   const formWatch = useWatch(form);
+  const debounceFormWatch = useDebounce(formWatch, 300);
 
   useEffect(() => {
     setSearchParams((prev) => ({
       ...prev,
-      ...formWatch,
+      ...debounceFormWatch,
     }));
-  }, [formWatch, setSearchParams]);
-
-  const genders = getDbItemsForSelectList(dbGenders);
-  const provinces = getDbItemsForSelectList(dbProvinces);
+  }, [debounceFormWatch, setSearchParams]);
 
   const handleReset = () => {
-    reset(defaultValues);
+    form.reset();
   };
 
   return (
@@ -77,14 +65,13 @@ export default function PeopleSearchForm() {
         placeholder="Select a gender"
         onChange={(e) => form.setValue("genderId", Number(e.target.value))}
       >
-        {genders.map((gender) => (
+        {getDbItemsForSelectList(dbGenders).map((gender) => (
           <SelectItem key={gender.value} value={gender.value}>
             {gender.label}
           </SelectItem>
         ))}
       </Select>
 
-      <div>{form.getValues("provinceIds")}</div>
       <Select
         {...register("provinceIds")}
         label="Provinces"
@@ -99,7 +86,7 @@ export default function PeopleSearchForm() {
           form.setValue("provinceIds", value);
         }}
       >
-        {provinces.map((province) => (
+        {getDbItemsForSelectList(dbProvinces).map((province) => (
           <SelectItem key={province.value} value={province.value}>
             {province.label}
           </SelectItem>
@@ -128,8 +115,6 @@ export default function PeopleSearchForm() {
           Reset
         </Button>
       </div>
-
-      <div>{JSON.stringify(form.getValues())}</div>
     </form>
   );
 }
