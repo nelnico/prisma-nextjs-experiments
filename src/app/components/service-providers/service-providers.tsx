@@ -16,11 +16,12 @@ import ServiceProvidersTable from "./service-provider-table";
 export const ServiceProviders = () => {
   const [currentSearch] = useAtom(appliedServiceProvidersSearchAtom);
   const setIsSearching = useSetAtom(searchInProgressAtom);
+  const debouncedSearch = useDebounce(currentSearch, 500);
   useEffect(() => {
     const loadServiceProviders = async () => {
       setIsSearching(true);
       try {
-        const data = await SearchServiceProviders(currentSearch);
+        const data = await SearchServiceProviders(debouncedSearch);
 
         setData(data?.data || []);
       } catch (err) {
@@ -30,7 +31,7 @@ export const ServiceProviders = () => {
       }
     };
     loadServiceProviders();
-  }, [currentSearch, setIsSearching]);
+  }, [debouncedSearch, setIsSearching]);
 
   const [data, setData] = useState<ServiceProvider[]>([]);
 

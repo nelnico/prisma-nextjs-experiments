@@ -13,21 +13,32 @@ import {
 import { de } from "@faker-js/faker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@nextui-org/input";
-import { Button, Select, SelectItem, Slider } from "@nextui-org/react";
+import {
+  Button,
+  Checkbox,
+  CheckboxGroup,
+  Radio,
+  RadioGroup,
+  Select,
+  SelectItem,
+  Slider,
+} from "@nextui-org/react";
 import { useAtom, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 export default function PeopleSearchForm() {
-  const setSearchParams = useSetAtom(serviceProviderSearchAtom);
+  const [searchParams, setSearchParams] = useAtom(serviceProviderSearchAtom);
 
   const defaultValues: ServiceProviderSearchFormData = {
     page: 0,
     size: 20,
     query: "",
-    genderId: 0,
+    genderId: null,
     provinceIds: [],
     ageRange: [21, 80],
+    isMarried: true,
+    hasChildren: true,
   };
 
   const form = useForm<ServiceProviderSearchFormData>({
@@ -35,20 +46,22 @@ export default function PeopleSearchForm() {
     defaultValues,
   });
 
-  const { register } = form;
+  const { register, reset } = form;
 
   const formWatch = useWatch(form);
-  const debounceFormWatch = useDebounce(formWatch, 300);
 
   useEffect(() => {
     setSearchParams((prev) => ({
       ...prev,
-      ...debounceFormWatch,
+      ...formWatch,
     }));
-  }, [debounceFormWatch, setSearchParams]);
+  }, [formWatch, setSearchParams]);
 
-  const handleReset = () => {
-    form.reset();
+  const getBothYesNoValue = (value: boolean | null) => {
+    if (value === null) return "both";
+    if (value === true) return "yes";
+    if (value === false) return "no";
+    return "both"; // Default case, though it should not be reached
   };
 
   return (
@@ -57,6 +70,7 @@ export default function PeopleSearchForm() {
         {...register("query")}
         label="Search by name or phone"
         placeholder="Search..."
+        value={form.getValues("query")}
       />
 
       <Select
@@ -110,8 +124,57 @@ export default function PeopleSearchForm() {
         }}
         className="max-w-md"
       />
+
+      {/* <Checkbox {...register("isMarried")} color="primary">
+        Married
+      </Checkbox>
+
+      <Checkbox {...register("hasChildren")} color="primary">
+        Has Children
+      </Checkbox> */}
+
+      <RadioGroup
+        label="Married"
+        orientation="horizontal"
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value === "both") {
+            form.setValue("isMarried", null);
+          } else if (value === "yes") {
+            form.setValue("isMarried", true);
+          } else {
+            form.setValue("isMarried", false);
+          }
+        }}
+        value={getBothYesNoValue(form.getValues("isMarried"))}
+      >
+        <Radio value="both">Both</Radio>
+        <Radio value="yes">Yes</Radio>
+        <Radio value="no">No</Radio>
+      </RadioGroup>
+
+      <RadioGroup
+        label="Has Children"
+        orientation="horizontal"
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value === "both") {
+            form.setValue("hasChildren", null);
+          } else if (value === "yes") {
+            form.setValue("hasChildren", true);
+          } else {
+            form.setValue("hasChildren", false);
+          }
+        }}
+        value={getBothYesNoValue(form.getValues("hasChildren"))}
+      >
+        <Radio value="both">Both</Radio>
+        <Radio value="yes">Yes</Radio>
+        <Radio value="no">No</Radio>
+      </RadioGroup>
+
       <div className="flex justify-end">
-        <Button type="button" onClick={handleReset}>
+        <Button type="button" onClick={() => reset()}>
           Reset
         </Button>
       </div>

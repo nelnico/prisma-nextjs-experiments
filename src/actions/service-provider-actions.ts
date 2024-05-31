@@ -64,6 +64,20 @@ export async function SearchServiceProviders(
       };
     }
 
+    if (searchRequest.isMarried !== null) {
+      whereCondition = {
+        ...whereCondition,
+        isMarried: searchRequest.isMarried,
+      };
+    }
+
+    if (searchRequest.hasChildren !== null) {
+      whereCondition = {
+        ...whereCondition,
+        hasChildren: searchRequest.hasChildren,
+      };
+    }
+
     const totalCount = await prisma.serviceProvider.count();
     const filteredCount = await prisma.serviceProvider.count({
       where: whereCondition,
